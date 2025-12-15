@@ -1,0 +1,90 @@
+@startuml
+' Style configurations
+skinparam class {
+    BackgroundColor<<FeatureType>> #FFD700
+    BackgroundColor<<DataType>> #9370DB
+    BorderColor Black
+    ArrowColor Black
+}
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 250
+
+' ------------------------------------------------------------------
+' NODES
+' ------------------------------------------------------------------
+
+class "BLPU" as blpu <<FeatureType>> {
+    + Primary Key: UPRN
+    --
+    <i>The fundamental spatial object representing a distinct area of land, property, or structure with a fixed location. It serves as the central node linking all address, lifecycle, and classification data together.</i>
+}
+
+class "Application Cross Reference" as crossref <<DataType>> {
+    + Foreign Key: UPRN
+    + Primary Key: XREF_KEY
+    --
+    <i>Facilitates interoperability by linking the UPRN to identifiers from external datasets, such as OS MasterMap TOIDs, VOA Council Tax references, and ONS codes, enabling cross-dataset analysis and integration.</i>
+}
+
+class "Classification" as classification <<DataType>> {
+    + Foreign Key: UPRN
+    + Primary Key: CLASS_KEY
+    --
+    <i>Assigns a specific alphanumeric code from the AddressBase Classification Scheme to the BLPU, categorizing the property's function (e.g., Residential, Commercial, Land) to enable precise filtering and usage analysis.</i>
+}
+
+class "Successor" as successor <<DataType>> {
+    + Foreign Key: UPRN
+    + Primary Key: SUCC_KEY
+    --
+    <i>Manages the lifecycle continuity of properties by linking a retired UPRN to its replacement UPRNs. This is critical for tracking history when buildings are demolished, split, into sub-buildings, or merged.</i>
+}
+
+class "Organisation" as organisation <<DataType>> {
+    + Foreign Key: UPRN
+    + Primary Key: ORG_KEY
+    --
+    <i>Identifies the current non-domestic occupier or business name associated with the property. It allows for the identification of commercial entities, public services, and other organizations residing at a specific UPRN.</i>
+}
+
+class "Delivery Point Address" as delivery_point <<DataType>> {
+    + Foreign Key: UPRN
+    + Primary Key: UDPRN
+    --
+    <i>Contains the official Royal Mail Postcode Address File (PAF) data. It represents a property capable of receiving mail and includes details like the organisation name, building name, thoroughfare, and postcode.</i>
+}
+
+class "LPI" as lpi <<DataType>> {
+    + Foreign Key: UPRN
+    + Foreign Key (2): USRN
+    + Primary Key: LPI_KEY
+    --
+    <i>Represents the official address definition provided by the Local Authority Custodian. It links the BLPU to a Street (USRN) and handles dual-language (Welsh/English) or alternative addressing descriptions for the property.</i>
+}
+
+class "Street" as street <<FeatureType>> {
+    + Primary Key: USRN
+    --
+    <i>Represents the physical geometry and maintenance attributes of a way or thoroughfare. It acts as the spatial parent for addresses, defined by start/end coordinates, surface type, and classification status.</i>
+}
+
+class "Street Descriptor" as street_descriptor <<DataType>> {
+    + Foreign Key: USRN
+    --
+    <i>Provides the descriptive text attributes for a Street feature, such as the street name, town name, and locality. It allows a single physical street to possess multiple linguistic descriptions (e.g., Welsh).</i>
+}
+
+' ------------------------------------------------------------------
+' RELATIONSHIPS & CARDINALITY
+' ------------------------------------------------------------------
+
+crossref "0..*" --> blpu
+classification "1..*" --> blpu
+successor "0..*" --> blpu
+organisation "0..*" --> blpu
+delivery_point "0..1" --> blpu
+lpi "1..*" --> blpu
+
+lpi --> street
+street --> "1..*" street_descriptor
+@enduml
