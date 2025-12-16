@@ -90,12 +90,22 @@ from __future__ import annotations
 import duckdb
 
 
-def prepare_street_descriptor_views(con: duckdb.DuckDBPyConnection) -> None:
-    """Create best street descriptor views (by language and any)."""
-    # Best by language
-    con.execute("""
+def prepare_street_descriptor_views(
+    con: duckdb.DuckDBPyConnection,
+    usrn_filter_view: str,
+) -> None:
+    """Create best street descriptor views (by language and any).
+
+    Args:
+        con: DuckDB connection.
+        usrn_filter_view: View name containing (usrn, language) pairs to filter
+            street descriptors to. When num_chunks=1, this view contains all
+            USRNs (a no-op filter), ensuring identical code paths.
+    """
+    # Best by language - filtered to USRNs in chunk
+    con.execute(f"""
         CREATE OR REPLACE TEMP VIEW _sd_best_by_lang AS
-        SELECT *
+        SELECT sd_ranked.*
         FROM (
             SELECT sd.*,
                    ROW_NUMBER() OVER (
@@ -105,14 +115,15 @@ def prepare_street_descriptor_views(con: duckdb.DuckDBPyConnection) -> None:
                          COALESCE(sd.last_update_date, DATE '0001-01-01') DESC
                    ) AS rn
             FROM street_descriptor sd
-        )
+            INNER JOIN {usrn_filter_view} uf ON sd.usrn = uf.usrn AND sd.language = uf.language
+        ) sd_ranked
         WHERE rn = 1
     """)
 
-    # Best any language
-    con.execute("""
+    # Best any language - filtered to USRNs in chunk
+    con.execute(f"""
         CREATE OR REPLACE TEMP VIEW _sd_best_any AS
-        SELECT *
+        SELECT sd_ranked.*
         FROM (
             SELECT sd.*,
                    ROW_NUMBER() OVER (
@@ -122,13 +133,20 @@ def prepare_street_descriptor_views(con: duckdb.DuckDBPyConnection) -> None:
                          COALESCE(sd.last_update_date, DATE '0001-01-01') DESC
                    ) AS rn
             FROM street_descriptor sd
-        )
+            WHERE sd.usrn IN (SELECT DISTINCT usrn FROM {usrn_filter_view})
+        ) sd_ranked
         WHERE rn = 1
     """)
 
 
 def prepare_lpi_base(con: duckdb.DuckDBPyConnection) -> None:
-    """Create materialised LPI base tables with address components."""
+    """Create materialised LPI base tables with address components.
+
+    Note: This function requires that `parent_uprns_with_children` temp table
+    exists in the connection. In chunked mode, this table is created from the
+    full BLPU dataset to correctly identify parent UPRNs even when their
+    children are in different chunks.
+    """
     con.execute("DROP TABLE IF EXISTS lpi_base_full")
     con.execute("""
         CREATE TEMPORARY TABLE lpi_base_full AS
@@ -147,7 +165,7 @@ def prepare_lpi_base(con: duckdb.DuckDBPyConnection) -> None:
             b.parent_uprn,
             CASE
                 WHEN b.parent_uprn IS NOT NULL THEN 'C'
-                WHEN EXISTS (SELECT 1 FROM blpu b2 WHERE b2.parent_uprn = l.uprn) THEN 'P'
+                WHEN hc.uprn IS NOT NULL THEN 'P'
                 ELSE 'S'
             END AS hierarchy_level,
             l.level,
@@ -171,6 +189,7 @@ def prepare_lpi_base(con: duckdb.DuckDBPyConnection) -> None:
             END AS status_rank
         FROM lpi l
         JOIN blpu b ON b.uprn = l.uprn
+        LEFT JOIN parent_uprns_with_children hc ON hc.uprn = l.uprn
         LEFT JOIN _sd_best_by_lang sd_lang ON sd_lang.usrn = l.usrn AND sd_lang.language = l.language
         LEFT JOIN _sd_best_any sd_any ON sd_any.usrn = l.usrn
         WHERE (b.addressbase_postal != 'N' OR b.addressbase_postal IS NULL)

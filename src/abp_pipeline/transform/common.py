@@ -11,6 +11,30 @@ class ToFlatfileError(Exception):
     """Error during flatfile transformation."""
 
 
+def chunk_where(col: str, num_chunks: int, chunk_id: int) -> str:
+    """Generate SQL WHERE predicate for chunk filtering based on hash of column.
+
+    Uses deterministic hashing to partition rows by a column value (e.g., UPRN)
+    so that each chunk gets a disjoint subset of rows.
+
+    Args:
+        col: Column name to hash for partitioning (e.g., "uprn").
+        num_chunks: Total number of chunks (must be >= 1).
+        chunk_id: Zero-based chunk index (must be 0 <= chunk_id < num_chunks).
+
+    Returns:
+        SQL WHERE clause fragment like "uprn IS NOT NULL AND (hash(uprn) % 10) = 3".
+
+    Raises:
+        ValueError: If num_chunks < 1 or chunk_id is out of range.
+    """
+    if num_chunks < 1:
+        raise ValueError(f"num_chunks must be >= 1, got {num_chunks}")
+    if not (0 <= chunk_id < num_chunks):
+        raise ValueError(f"chunk_id must be in range [0, {num_chunks}), got {chunk_id}")
+    return f"{col} IS NOT NULL AND (hash({col}) % {num_chunks}) = {chunk_id}"
+
+
 def assert_inputs_exist(parquet_dir: Path) -> None:
     """Check that required input parquet files exist.
 

@@ -6,7 +6,12 @@ import duckdb
 
 
 def combine_and_dedupe(con: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyRelation:
-    """Combine all variant tables and deduplicate."""
+    """Combine all variant tables and deduplicate.
+
+    Note: Final ORDER BY is omitted to reduce memory usage during chunked
+    processing. Parquet readers can sort on read if needed, or downstream
+    consumers can handle ordering.
+    """
     # Combine all stage tables
     con.execute("""
         CREATE OR REPLACE VIEW _raw_address_variants AS
@@ -16,7 +21,7 @@ def combine_and_dedupe(con: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyRelatio
         UNION ALL SELECT * FROM _stage_custom_level_variants
     """)
 
-    # Final deduplication and enrichment
+    # Final deduplication and enrichment (no ORDER BY for memory efficiency)
     return con.sql(r"""
         WITH normalized AS (
             SELECT
@@ -73,5 +78,4 @@ def combine_and_dedupe(con: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyRelatio
         FROM source_ranked sr
         LEFT JOIN classification_best cb ON cb.uprn = sr.uprn
         LEFT JOIN delivery_point_best dp ON dp.uprn = sr.uprn
-        ORDER BY sr.uprn, sr.source, sr.variant_label
     """)

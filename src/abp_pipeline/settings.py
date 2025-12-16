@@ -46,6 +46,7 @@ class ProcessingSettings:
     parquet_compression: str = "zstd"
     parquet_compression_level: int = 9
     duckdb_memory_limit: str | None = None
+    num_chunks: int = 1
 
 
 @dataclass
@@ -159,10 +160,14 @@ def load_settings(config_path: str | Path, load_env: bool = True) -> Settings:
 
     # Build processing settings
     proc_config = config.get("processing", {})
+    num_chunks = proc_config.get("num_chunks", 1)
+    if num_chunks < 1:
+        raise SettingsError(f"processing.num_chunks must be >= 1, got {num_chunks}")
     processing = ProcessingSettings(
         parquet_compression=proc_config.get("parquet_compression", "zstd"),
         parquet_compression_level=proc_config.get("parquet_compression_level", 9),
         duckdb_memory_limit=proc_config.get("duckdb_memory_limit"),
+        num_chunks=num_chunks,
     )
 
     return Settings(

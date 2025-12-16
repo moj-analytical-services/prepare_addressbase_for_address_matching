@@ -48,6 +48,11 @@ paths:
 os_downloads:
   package_id: "0040204651"
   version_id: "6758807"  # Update when new data is released
+
+processing:
+  # Number of chunks to split flatfile processing into
+  # Use higher values (e.g., 10) for lower memory usage on laptops
+  num_chunks: 1
 ```
 
 ### 4. Run
@@ -87,7 +92,14 @@ Each stage is **idempotent** - safe to re-run. Use `--force` to overwrite existi
 
 ## Output Format
 
-The final output (`data/output/abp_for_uk_address_matcher.parquet`) contains:
+The final output is written to `data/output/` as one or more parquet files:
+
+- **Single chunk mode** (`num_chunks: 1`): `abp_for_uk_address_matcher.chunk_000_of_001.parquet`
+- **Multi-chunk mode** (`num_chunks: N`): `abp_for_uk_address_matcher.chunk_000_of_00N.parquet`, `chunk_001_of_00N.parquet`, etc.
+
+Chunking reduces memory usage by processing UPRNs in batches. The union of all chunk files equals the single-chunk output. Use a higher `num_chunks` (e.g., 10) for laptops with limited RAM.
+
+Each file contains:
 
 | Column | Description |
 |--------|-------------|
