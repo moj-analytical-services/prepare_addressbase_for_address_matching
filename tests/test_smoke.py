@@ -315,8 +315,8 @@ class TestChunking:
             assert path.exists()
 
         # Check naming convention
-        assert "chunk_000_of_002" in output_paths[0].name
-        assert "chunk_001_of_002" in output_paths[1].name
+        assert "chunk_001_of_002" in output_paths[0].name
+        assert "chunk_002_of_002" in output_paths[1].name
 
     def test_chunk_union_equals_baseline(self, temp_settings: Settings) -> None:
         """Test that union of chunked outputs equals single-chunk baseline."""

@@ -39,4 +39,4 @@ processing:
   # Number of chunks to split flatfile processing into (default: 1)
   # Use higher values (e.g., 10) for lower memory usage on laptops
   # Output will be split into multiple parquet files, one per chunk
-  num_chunks: 2
+  num_chunks: 3

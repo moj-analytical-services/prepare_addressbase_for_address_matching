@@ -94,8 +94,8 @@ Each stage is **idempotent** - safe to re-run. Use `--force` to overwrite existi
 
 The final output is written to `data/output/` as one or more parquet files:
 
-- **Single chunk mode** (`num_chunks: 1`): `abp_for_uk_address_matcher.chunk_000_of_001.parquet`
-- **Multi-chunk mode** (`num_chunks: N`): `abp_for_uk_address_matcher.chunk_000_of_00N.parquet`, `chunk_001_of_00N.parquet`, etc.
+- **Single chunk mode** (`num_chunks: 1`): `abp_for_uk_address_matcher.chunk_001_of_001.parquet`
+- **Multi-chunk mode** (`num_chunks: N`): `abp_for_uk_address_matcher.chunk_001_of_00N.parquet`, `chunk_002_of_00N.parquet`, etc.
 
 Chunking reduces memory usage by processing UPRNs in batches. The union of all chunk files equals the single-chunk output. Use a higher `num_chunks` (e.g., 10) for laptops with limited RAM.
 

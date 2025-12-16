@@ -44,8 +44,7 @@ def _assert_flatfile_exists(settings: Settings) -> None:
     chunk_files = _get_flatfile_paths(settings)
     if not chunk_files:
         raise FileNotFoundError(
-            f"No flatfile chunks found in {settings.paths.output_dir}. "
-            "Run the flatfile step first."
+            f"No flatfile chunks found in {settings.paths.output_dir}. Run the flatfile step first."
         )
 
 

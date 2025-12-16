@@ -49,10 +49,11 @@ def _get_chunk_output_path(output_dir: Path, chunk_id: int, num_chunks: int) -> 
         num_chunks: Total number of chunks.
 
     Returns:
-        Path like output_dir/abp_for_uk_address_matcher.chunk_000_of_010.parquet
+        Path like output_dir/abp_for_uk_address_matcher.chunk_001_of_010.parquet
     """
     return (
-        output_dir / f"abp_for_uk_address_matcher.chunk_{chunk_id:03d}_of_{num_chunks:03d}.parquet"
+        output_dir
+        / f"abp_for_uk_address_matcher.chunk_{chunk_id + 1:03d}_of_{num_chunks:03d}.parquet"
     )
 
 

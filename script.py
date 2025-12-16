@@ -12,8 +12,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from abp_pipeline.inspect_results import (
+    get_variant_statistics,
+)
 from abp_pipeline.pipeline import run
-from abp_pipeline.settings import load_settings
+from abp_pipeline.settings import create_duckdb_connection, load_settings
 
 # ============================================================================
 # CONFIGURATION - Modify these settings as needed
@@ -67,6 +70,9 @@ def main():
         )
 
     logger.info("Pipeline completed successfully")
+    con = create_duckdb_connection(settings)
+    stats = get_variant_statistics(con, settings=settings)
+    print("Variant statistics:", stats)
 
 
 if __name__ == "__main__":
