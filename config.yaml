@@ -29,3 +29,9 @@ processing:
   # Parquet compression settings
   parquet_compression: zstd
   parquet_compression_level: 9
+  
+  # DuckDB memory limit (optional)
+  # If set, limits how much RAM DuckDB can use (e.g., '4GB', '500MB')
+  # Useful for testing on low-memory machines
+  # If not set, DuckDB uses its default (80% of physical RAM)
+  # duckdb_memory_limit: '4GB'

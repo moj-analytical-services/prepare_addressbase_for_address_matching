@@ -11,7 +11,7 @@ from pathlib import Path
 
 import duckdb
 
-from abp_pipeline.settings import Settings
+from abp_pipeline.settings import Settings, create_duckdb_connection
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,8 @@ def get_variant_statistics(settings: Settings) -> dict:
     flatfile_path = _get_flatfile_path(settings)
     _assert_flatfile_exists(flatfile_path)
 
-    stats = duckdb.sql(f"""
+    con = create_duckdb_connection(settings)
+    stats = con.sql(f"""
         WITH variant_counts AS (
             SELECT uprn, COUNT(*) AS variant_count
             FROM read_parquet('{flatfile_path.as_posix()}')
@@ -87,8 +88,10 @@ def get_random_uprn(settings: Settings) -> duckdb.DuckDBPyRelation:
     flatfile_path = _get_flatfile_path(settings)
     _assert_flatfile_exists(flatfile_path)
 
+    con = create_duckdb_connection(settings)
+
     # Get a random UPRN
-    random_uprn = duckdb.sql(f"""
+    random_uprn = con.sql(f"""
         SELECT DISTINCT uprn
         FROM read_parquet('{flatfile_path.as_posix()}')
         ORDER BY RANDOM()
@@ -98,7 +101,7 @@ def get_random_uprn(settings: Settings) -> duckdb.DuckDBPyRelation:
     logger.info("Selected random UPRN: %s", random_uprn)
 
     # Get all variants for this UPRN
-    result = duckdb.sql(f"""
+    result = con.sql(f"""
         SELECT
             uprn,
             address_concat,
@@ -132,8 +135,10 @@ def get_random_large_uprn(settings: Settings, top_n: int = 100) -> duckdb.DuckDB
     flatfile_path = _get_flatfile_path(settings)
     _assert_flatfile_exists(flatfile_path)
 
+    con = create_duckdb_connection(settings)
+
     # Get a random UPRN from the top N largest
-    selected = duckdb.sql(f"""
+    selected = con.sql(f"""
         WITH variant_counts AS (
             SELECT uprn, COUNT(*) AS variant_count
             FROM read_parquet('{flatfile_path.as_posix()}')
@@ -155,7 +160,7 @@ def get_random_large_uprn(settings: Settings, top_n: int = 100) -> duckdb.DuckDB
     )
 
     # Get all variants for this UPRN
-    result = duckdb.sql(f"""
+    result = con.sql(f"""
         SELECT
             uprn,
             address_concat,
@@ -186,7 +191,8 @@ def get_uprn_variants(settings: Settings, uprn: int) -> duckdb.DuckDBPyRelation:
     flatfile_path = _get_flatfile_path(settings)
     _assert_flatfile_exists(flatfile_path)
 
-    result = duckdb.sql(f"""
+    con = create_duckdb_connection(settings)
+    result = con.sql(f"""
         SELECT
             uprn,
             address_concat,
@@ -225,4 +231,5 @@ def get_flatfile(settings: Settings) -> duckdb.DuckDBPyRelation:
     flatfile_path = _get_flatfile_path(settings)
     _assert_flatfile_exists(flatfile_path)
 
-    return duckdb.read_parquet(flatfile_path.as_posix())
+    con = create_duckdb_connection(settings)
+    return con.read_parquet(flatfile_path.as_posix())

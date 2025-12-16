@@ -17,7 +17,7 @@ from typing import Any
 import duckdb
 import yaml
 
-from abp_pipeline.settings import Settings
+from abp_pipeline.settings import Settings, create_duckdb_connection
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,7 @@ def split_raw_to_parquet(
 
     try:
         # Create DuckDB connection
-        con = duckdb.connect()
+        con = create_duckdb_connection(settings)
 
         # 1) Ingest all CSV files as single-column 'line' records
         # Use Unit Separator (ASCII 31) as delimiter to read entire lines

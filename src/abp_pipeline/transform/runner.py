@@ -6,9 +6,7 @@ import logging
 from pathlib import Path
 from time import perf_counter
 
-import duckdb
-
-from abp_pipeline.settings import Settings
+from abp_pipeline.settings import Settings, create_duckdb_connection
 from abp_pipeline.transform.common import (
     assert_inputs_exist,
     create_macros,
@@ -54,7 +52,7 @@ def transform_to_flatfile(
     logger.info("Starting flatfile transformation...")
 
     # Create connection and register views
-    con = duckdb.connect()
+    con = create_duckdb_connection(settings)
 
     register_parquet_view(con, "blpu", parquet_dir / "blpu.parquet")
     register_parquet_view(con, "lpi", parquet_dir / "lpi.parquet")

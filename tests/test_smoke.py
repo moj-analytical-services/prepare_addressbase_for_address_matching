@@ -14,7 +14,13 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from abp_pipeline.settings import OSDownloadSettings, PathSettings, ProcessingSettings, Settings
+from abp_pipeline.settings import (
+    OSDownloadSettings,
+    PathSettings,
+    ProcessingSettings,
+    Settings,
+    create_duckdb_connection,
+)
 from abp_pipeline.split_raw import split_raw_to_parquet
 from abp_pipeline.transform.runner import transform_to_flatfile
 
@@ -96,7 +102,7 @@ class TestSplitRaw:
         )
 
         # Check BLPU columns using DuckDB without pandas
-        con = duckdb.connect()
+        con = create_duckdb_connection(temp_settings)
         result = con.execute(
             f"SELECT * FROM read_parquet('{output_paths['blpu'].as_posix()}') LIMIT 1"
         ).description
@@ -175,7 +181,7 @@ class TestFlatfile:
         output_path = transform_to_flatfile(temp_settings, force=True)
 
         # Check columns using DuckDB without pandas
-        con = duckdb.connect()
+        con = create_duckdb_connection(temp_settings)
         result = con.execute(
             f"SELECT * FROM read_parquet('{output_path.as_posix()}') LIMIT 1"
         ).description
@@ -208,7 +214,7 @@ class TestFlatfile:
         output_path = transform_to_flatfile(temp_settings, force=True)
 
         # Check row count
-        con = duckdb.connect()
+        con = create_duckdb_connection(temp_settings)
         count = con.execute(
             f"SELECT COUNT(*) FROM read_parquet('{output_path.as_posix()}')"
         ).fetchone()[0]

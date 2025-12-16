@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import duckdb
 import yaml
 from dotenv import load_dotenv
 
@@ -44,6 +45,7 @@ class ProcessingSettings:
 
     parquet_compression: str = "zstd"
     parquet_compression_level: int = 9
+    duckdb_memory_limit: str | None = None
 
 
 @dataclass
@@ -160,6 +162,7 @@ def load_settings(config_path: str | Path, load_env: bool = True) -> Settings:
     processing = ProcessingSettings(
         parquet_compression=proc_config.get("parquet_compression", "zstd"),
         parquet_compression_level=proc_config.get("parquet_compression_level", 9),
+        duckdb_memory_limit=proc_config.get("duckdb_memory_limit"),
     )
 
     return Settings(
@@ -168,3 +171,22 @@ def load_settings(config_path: str | Path, load_env: bool = True) -> Settings:
         processing=processing,
         config_path=config_path,
     )
+
+
+def create_duckdb_connection(settings: Settings) -> duckdb.DuckDBPyConnection:
+    """Create a DuckDB connection with optional memory limit applied.
+
+    Args:
+        settings: Settings object containing processing configuration.
+
+    Returns:
+        DuckDB connection with memory limit applied if configured.
+    """
+    con = duckdb.connect()
+
+    # Apply memory limit if configured
+    if settings.processing.duckdb_memory_limit:
+        con.execute(f"SET memory_limit = '{settings.processing.duckdb_memory_limit}'")
+        logger.info("Set DuckDB memory limit to %s", settings.processing.duckdb_memory_limit)
+
+    return con
