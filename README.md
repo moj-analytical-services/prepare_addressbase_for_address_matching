@@ -1,6 +1,8 @@
 # ABP Pipeline
 
-Transform AddressBase Premium data into a clean flatfile format suitable for UK address matching.
+Transform AddressBase Premium data into a clean flatfile format suitable for use with [`uk_address_matcher`](https://github.com/moj-analytical-services/uk_address_matcher).
+
+The key feature is that we output multiple variants of the full address string to increase the likelihood of matching.
 
 ## Overview
 
