@@ -11,44 +11,64 @@ from pathlib import Path
 
 import duckdb
 
-from abp_pipeline.settings import Settings, create_duckdb_connection
+from abp_pipeline.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 
-def _get_flatfile_path(settings: Settings) -> Path:
-    """Get the path to the flatfile parquet."""
-    return settings.paths.output_dir / "abp_for_uk_address_matcher.parquet"
+def _get_flatfile_paths(settings: Settings) -> list[Path]:
+    """Get the paths to all flatfile parquet chunks.
+
+    Returns:
+        List of paths to chunk files matching the naming pattern.
+        Handles both single-chunk and multi-chunk outputs.
+    """
+    output_dir = settings.paths.output_dir
+    # Find all files matching the chunk naming pattern
+    chunk_files = sorted(output_dir.glob("abp_for_uk_address_matcher.chunk_*.parquet"))
+    return chunk_files
 
 
-def _assert_flatfile_exists(flatfile_path: Path) -> None:
-    """Check that the flatfile exists."""
-    if not flatfile_path.exists():
+def _get_flatfile_glob_pattern(settings: Settings) -> str:
+    """Get the glob pattern for flatfile parquet chunks.
+
+    Returns:
+        Glob pattern string like 'dir/abp_for_uk_address_matcher.chunk_*.parquet'
+    """
+    output_dir = settings.paths.output_dir
+    return (output_dir / "abp_for_uk_address_matcher.chunk_*.parquet").as_posix()
+
+
+def _assert_flatfile_exists(settings: Settings) -> None:
+    """Check that at least one flatfile chunk exists."""
+    chunk_files = _get_flatfile_paths(settings)
+    if not chunk_files:
         raise FileNotFoundError(
-            f"Flatfile not found: {flatfile_path}. Run the flatfile step first."
+            f"No flatfile chunks found in {settings.paths.output_dir}. "
+            "Run the flatfile step first."
         )
 
 
-def get_variant_statistics(settings: Settings) -> dict:
+def get_variant_statistics(con: duckdb.DuckDBPyConnection, settings: Settings) -> dict:
     """Show summary statistics of address variants per UPRN.
 
     Calculates and displays the mean and median number of address variants
     per UPRN in the flatfile.
 
     Args:
+        con: DuckDB connection.
         settings: Application settings.
 
     Returns:
         Dictionary with statistics: total_uprns, total_variants, mean_variants, median_variants.
     """
-    flatfile_path = _get_flatfile_path(settings)
-    _assert_flatfile_exists(flatfile_path)
+    _assert_flatfile_exists(settings)
+    flatfile_pattern = _get_flatfile_glob_pattern(settings)
 
-    con = create_duckdb_connection(settings)
     stats = con.sql(f"""
         WITH variant_counts AS (
             SELECT uprn, COUNT(*) AS variant_count
-            FROM read_parquet('{flatfile_path.as_posix()}')
+            FROM read_parquet('{flatfile_pattern}')
             GROUP BY uprn
         )
         SELECT
@@ -73,27 +93,26 @@ def get_variant_statistics(settings: Settings) -> dict:
     return result
 
 
-def get_random_uprn(settings: Settings) -> duckdb.DuckDBPyRelation:
+def get_random_uprn(con: duckdb.DuckDBPyConnection, settings: Settings) -> duckdb.DuckDBPyRelation:
     """Show a random UPRN and all its address variants.
 
     Selects a random UPRN from the flatfile and displays all associated
     address variants.
 
     Args:
+        con: DuckDB connection.
         settings: Application settings.
 
     Returns:
         DuckDB relation containing the variants for the selected UPRN.
     """
-    flatfile_path = _get_flatfile_path(settings)
-    _assert_flatfile_exists(flatfile_path)
-
-    con = create_duckdb_connection(settings)
+    _assert_flatfile_exists(settings)
+    flatfile_pattern = _get_flatfile_glob_pattern(settings)
 
     # Get a random UPRN
     random_uprn = con.sql(f"""
         SELECT DISTINCT uprn
-        FROM read_parquet('{flatfile_path.as_posix()}')
+        FROM read_parquet('{flatfile_pattern}')
         ORDER BY RANDOM()
         LIMIT 1
     """).fetchone()[0]
@@ -111,7 +130,7 @@ def get_random_uprn(settings: Settings) -> duckdb.DuckDBPyRelation:
             is_primary,
             classification_code,
             udprn
-        FROM read_parquet('{flatfile_path.as_posix()}')
+        FROM read_parquet('{flatfile_pattern}')
         WHERE uprn = {random_uprn}
         ORDER BY is_primary DESC, source, variant_label
     """)
@@ -119,29 +138,30 @@ def get_random_uprn(settings: Settings) -> duckdb.DuckDBPyRelation:
     return result
 
 
-def get_random_large_uprn(settings: Settings, top_n: int = 100) -> duckdb.DuckDBPyRelation:
+def get_random_large_uprn(
+    con: duckdb.DuckDBPyConnection, settings: Settings, top_n: int = 100
+) -> duckdb.DuckDBPyRelation:
     """Show variants for a randomly selected UPRN from the top N largest.
 
     Identifies UPRNs with the most address variants, randomly selects one
     from the top N, and displays all its variants.
 
     Args:
+        con: DuckDB connection.
         settings: Application settings.
         top_n: Number of largest UPRNs to consider (default 100).
 
     Returns:
         DuckDB relation containing the variants for the selected UPRN.
     """
-    flatfile_path = _get_flatfile_path(settings)
-    _assert_flatfile_exists(flatfile_path)
-
-    con = create_duckdb_connection(settings)
+    _assert_flatfile_exists(settings)
+    flatfile_pattern = _get_flatfile_glob_pattern(settings)
 
     # Get a random UPRN from the top N largest
     selected = con.sql(f"""
         WITH variant_counts AS (
             SELECT uprn, COUNT(*) AS variant_count
-            FROM read_parquet('{flatfile_path.as_posix()}')
+            FROM read_parquet('{flatfile_pattern}')
             GROUP BY uprn
             ORDER BY variant_count DESC
             LIMIT {top_n}
@@ -170,7 +190,7 @@ def get_random_large_uprn(settings: Settings, top_n: int = 100) -> duckdb.DuckDB
             is_primary,
             classification_code,
             udprn
-        FROM read_parquet('{flatfile_path.as_posix()}')
+        FROM read_parquet('{flatfile_pattern}')
         WHERE uprn = {random_uprn}
         ORDER BY is_primary DESC, source, variant_label
     """)
@@ -178,20 +198,22 @@ def get_random_large_uprn(settings: Settings, top_n: int = 100) -> duckdb.DuckDB
     return result
 
 
-def get_uprn_variants(settings: Settings, uprn: int) -> duckdb.DuckDBPyRelation:
+def get_uprn_variants(
+    con: duckdb.DuckDBPyConnection, settings: Settings, uprn: int
+) -> duckdb.DuckDBPyRelation:
     """Show all address variants for a specific UPRN.
 
     Args:
+        con: DuckDB connection.
         settings: Application settings.
         uprn: The UPRN to look up.
 
     Returns:
         DuckDB relation containing all variants for the specified UPRN.
     """
-    flatfile_path = _get_flatfile_path(settings)
-    _assert_flatfile_exists(flatfile_path)
+    _assert_flatfile_exists(settings)
+    flatfile_pattern = _get_flatfile_glob_pattern(settings)
 
-    con = create_duckdb_connection(settings)
     result = con.sql(f"""
         SELECT
             uprn,
@@ -202,7 +224,7 @@ def get_uprn_variants(settings: Settings, uprn: int) -> duckdb.DuckDBPyRelation:
             is_primary,
             classification_code,
             udprn
-        FROM read_parquet('{flatfile_path.as_posix()}')
+        FROM read_parquet('{flatfile_pattern}')
         WHERE uprn = {uprn}
         ORDER BY is_primary DESC, source, variant_label
     """)
@@ -216,20 +238,21 @@ def get_uprn_variants(settings: Settings, uprn: int) -> duckdb.DuckDBPyRelation:
     return result
 
 
-def get_flatfile(settings: Settings) -> duckdb.DuckDBPyRelation:
+def get_flatfile(con: duckdb.DuckDBPyConnection, settings: Settings) -> duckdb.DuckDBPyRelation:
     """Load the entire flatfile dataset as a DuckDB relation.
 
     Returns the full address matching flatfile as a DuckDB relation/dataframe
-    for further analysis or querying.
+    for further analysis or querying. Automatically handles both single-chunk
+    and multi-chunk outputs by reading all matching chunk files.
 
     Args:
+        con: DuckDB connection.
         settings: Application settings.
 
     Returns:
         DuckDB relation containing the entire flatfile dataset.
     """
-    flatfile_path = _get_flatfile_path(settings)
-    _assert_flatfile_exists(flatfile_path)
+    _assert_flatfile_exists(settings)
+    flatfile_pattern = _get_flatfile_glob_pattern(settings)
 
-    con = create_duckdb_connection(settings)
-    return con.read_parquet(flatfile_path.as_posix())
+    return con.read_parquet(flatfile_pattern)

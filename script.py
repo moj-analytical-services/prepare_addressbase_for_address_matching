@@ -51,6 +51,7 @@ def main():
     """Run the ABP pipeline with configured settings."""
     # Load settings
     settings = load_settings(CONFIG_PATH)
+
     logger.info("Loaded config from %s", CONFIG_PATH)
 
     # Normalize step(s) to a list

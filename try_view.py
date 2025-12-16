@@ -6,16 +6,21 @@ from abp_pipeline.inspect_results import (
     get_random_uprn,
     get_variant_statistics,
 )
-from abp_pipeline.settings import load_settings
+from abp_pipeline.settings import create_duckdb_connection, load_settings
 
 settings = load_settings(Path("config.yaml"))
-get_flatfile(settings)
+
+# Create DuckDB connection once and reuse it
+con = create_duckdb_connection(settings)
+
+# Get the flatfile
+get_flatfile(con, settings)
 
 # Get statistics
-get_variant_statistics(settings)
+get_variant_statistics(con, settings)
 
 # View a random address
-get_random_uprn(settings)
+get_random_uprn(con, settings)
 
 # View a random "large" address from top 50
-get_random_large_uprn(settings, top_n=50)
+get_random_large_uprn(con, settings, top_n=50)
