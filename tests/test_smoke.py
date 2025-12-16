@@ -16,7 +16,7 @@ import pytest
 
 from abp_pipeline.settings import OSDownloadSettings, PathSettings, ProcessingSettings, Settings
 from abp_pipeline.split_raw import split_raw_to_parquet
-from abp_pipeline.to_flatfile import transform_to_flatfile
+from abp_pipeline.transform.runner import transform_to_flatfile
 
 # Path to sample data
 SAMPLE_DATA_DIR = Path(__file__).parent / "data"

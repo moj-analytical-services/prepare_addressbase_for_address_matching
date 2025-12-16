@@ -12,7 +12,7 @@ from abp_pipeline.extract import run_extract_step
 from abp_pipeline.os_downloads import run_download_step
 from abp_pipeline.settings import Settings
 from abp_pipeline.split_raw import run_split_step
-from abp_pipeline.to_flatfile import run_flatfile_step
+from abp_pipeline.transform import run_flatfile_step
 
 logger = logging.getLogger(__name__)
 
