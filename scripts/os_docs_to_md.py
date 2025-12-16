@@ -120,9 +120,7 @@ def _build_session() -> requests.Session:
     return s
 
 
-def _convert_page(
-    md: MarkItDown, url: str, session: requests.Session
-) -> tuple[str, str]:
+def _convert_page(md: MarkItDown, url: str, session: requests.Session) -> tuple[str, str]:
     resp = session.get(url, timeout=30)
     resp.raise_for_status()
 
@@ -142,9 +140,7 @@ def _convert_page(
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Scrape OS docs pages into a single Markdown file."
-    )
+    ap = argparse.ArgumentParser(description="Scrape OS docs pages into a single Markdown file.")
     ap.add_argument(
         "-o",
         "--output",
@@ -225,7 +221,8 @@ def main() -> int:
             f.write(body2)
             f.write("\n\n---\n")
 
-    # Download and append CSV headers from the zip file
+    # Download and append CSV headers from the zip file.  Note this data and the token in the URL is publicly available.
+    # from https://docs.os.uk/os-downloads/addressing-and-location/addressbase-premium/addressbase-premium-downloads
     print("\nDownloading CSV header files...")
     zip_url = "https://1897589978-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FcNpJpLP8RROUaWVQo5ea%2Fuploads%2FGSJPfervI4tEnUThO9Hd%2Faddressbase-premium-header-files.zip?alt=media&token=682afd54-9862-4caf-a46d-92c9ab8733dc"
 
@@ -239,14 +236,10 @@ def main() -> int:
 
             with out_path.open("a", encoding="utf-8") as f:
                 f.write("\n## CSV Header Files\n\n")
-                f.write(
-                    "Headers extracted from addressbase-premium-header-files.zip\n\n"
-                )
+                f.write("Headers extracted from addressbase-premium-header-files.zip\n\n")
 
                 with ZipFile(zip_path, "r") as zipf:
-                    csv_files = [
-                        name for name in zipf.namelist() if name.endswith(".csv")
-                    ]
+                    csv_files = [name for name in zipf.namelist() if name.endswith(".csv")]
 
                     for csv_file in sorted(csv_files):
                         print(f"  Processing: {csv_file}")
@@ -263,9 +256,7 @@ def main() -> int:
         print("CSV headers appended successfully")
 
     except Exception as e:
-        print(
-            f"  WARNING: Failed to download/process CSV headers: {e}", file=sys.stderr
-        )
+        print(f"  WARNING: Failed to download/process CSV headers: {e}", file=sys.stderr)
 
     print(f"\nDone! Wrote {out_path}")
     return 0
