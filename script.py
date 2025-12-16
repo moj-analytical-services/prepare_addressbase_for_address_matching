@@ -22,17 +22,19 @@ from abp_pipeline.settings import load_settings
 # Path to config.yaml file
 CONFIG_PATH = Path("config.yaml")
 
-# Pipeline step to run: "download", "extract", "split", "flatfile", or "all"
-STEP = "download"
+# Pipeline step(s) to run. Can be:
+# - A single step: "download", "extract", "split", "flatfile", or "all"
+# - A list of steps to run in sequence: ["split", "flatfile"]
+STEP: str | list[str] = ["extract", "split", "flatfile"]
 
 # Force re-run even if outputs exist
-FORCE = False
+FORCE = True
 
 # List available downloads without downloading (only for step="download")
 LIST_ONLY = False
 
 # Enable verbose/debug logging
-VERBOSE = False
+VERBOSE = True
 
 # ============================================================================
 
@@ -51,13 +53,18 @@ def main():
     settings = load_settings(CONFIG_PATH)
     logger.info("Loaded config from %s", CONFIG_PATH)
 
-    # Run pipeline
-    run(
-        step=STEP,
-        settings=settings,
-        force=FORCE,
-        list_only=LIST_ONLY,
-    )
+    # Normalize step(s) to a list
+    steps = [STEP] if isinstance(STEP, str) else STEP
+
+    # Run each step in sequence
+    for step in steps:
+        run(
+            step=step,
+            settings=settings,
+            force=FORCE,
+            list_only=LIST_ONLY,
+        )
+
     logger.info("Pipeline completed successfully")
 
 

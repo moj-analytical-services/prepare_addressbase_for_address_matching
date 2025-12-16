@@ -1,4 +1,3 @@
-If the user asks for a standalone executable script, create an executable python script as follows:
 
 ### Using a shebang to create an executable file
 

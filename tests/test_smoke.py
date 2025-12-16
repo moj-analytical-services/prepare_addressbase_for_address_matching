@@ -109,7 +109,7 @@ class TestSplitRaw:
         count = con.execute(
             f"SELECT COUNT(*) FROM read_parquet('{output_paths['blpu'].as_posix()}')"
         ).fetchone()[0]
-        assert count == 3  # 3 BLPU records in sample
+        assert count == 1  # 1 BLPU record in official OS sample
 
     def test_split_idempotent(self, temp_settings: Settings) -> None:
         """Test that split is idempotent (skips if outputs exist)."""
@@ -125,7 +125,8 @@ class TestSplitRaw:
 
         # Record which files have data (exist and non-empty)
         files_with_data = {
-            name: path for name, path in output_paths1.items()
+            name: path
+            for name, path in output_paths1.items()
             if path.exists() and path.stat().st_size > 0
         }
 

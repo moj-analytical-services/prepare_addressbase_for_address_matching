@@ -634,6 +634,29 @@ def transform_to_flatfile(
     result = _combine_and_dedupe(con)
     logger.info("Combination and deduplication in %.2f seconds", perf_counter() - t0)
 
+    # Data integrity check and statistics
+    input_uprn_count = con.execute("SELECT COUNT(DISTINCT uprn) FROM lpi_base_distinct").fetchone()[
+        0
+    ]
+    output_metrics = con.execute(
+        "SELECT COUNT(DISTINCT uprn) AS output_uprn_count, COUNT(*) AS total_variants FROM result"
+    ).fetchone()
+    output_uprn_count = output_metrics[0]
+    total_variants = output_metrics[1]
+
+    assert input_uprn_count == output_uprn_count, (
+        f"Lost UPRNs during processing! Input: {input_uprn_count}, Output: {output_uprn_count}"
+    )
+
+    variant_uplift_pct = ((total_variants - output_uprn_count) / output_uprn_count) * 100
+    logger.info(
+        "Address Statistics - Input UPRNs (Unique): %d | Output UPRNs (Unique): %d | Total Address Variants Generated: %d | Variant Uplift: %.1f%%",
+        input_uprn_count,
+        output_uprn_count,
+        total_variants,
+        variant_uplift_pct,
+    )
+
     t0 = perf_counter()
     if output_path.exists():
         output_path.unlink()
