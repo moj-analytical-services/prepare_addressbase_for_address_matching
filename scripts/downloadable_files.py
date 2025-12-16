@@ -62,7 +62,7 @@ def main() -> int:
     url = f"https://api.os.uk/downloads/v1/dataPackages/{PACKAGE_ID}/versions/{VERSION_ID}"
     headers = {"key": api_key}
 
-    print(f"Querying OS Downloads API...")
+    print("Querying OS Downloads API...")
     print(f"Package ID: {PACKAGE_ID}, Version: {VERSION_ID}\n")
 
     try:

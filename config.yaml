@@ -1,0 +1,31 @@
+# ABP Pipeline Configuration
+# All paths are relative to this config file's directory unless absolute
+
+paths:
+  # Base working directory for all data
+  work_dir: ./data
+
+  # Downloaded zip files from OS
+  downloads_dir: ./data/downloads
+
+  # Extracted CSV files from zip
+  extracted_dir: ./data/extracted
+
+  # Intermediate parquet files (one per record type)
+  parquet_dir: ./data/parquet
+
+  # Final output parquet files
+  output_dir: ./data/output
+
+# OS Data Hub download settings
+os_downloads:
+  # Data package ID from OS Data Hub
+  package_id: "0040206240"
+  # Version ID (update this when new data is released)
+  version_id: "6777574"
+
+# Processing options
+processing:
+  # Parquet compression settings
+  parquet_compression: zstd
+  parquet_compression_level: 9

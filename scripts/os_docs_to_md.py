@@ -165,7 +165,7 @@ def main() -> int:
     md = MarkItDown(enable_plugins=False)
     session = _build_session()
 
-    generated_at = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    generated_at = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
 
     # Pre-collect titles for a simple TOC (best-effort; if a page fails, it still proceeds).
     sections: list[tuple[str, str, str]] = []  # (url, title, body_md)
