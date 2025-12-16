@@ -68,18 +68,7 @@ uv run python script.py --step split       # Split by record type
 uv run python script.py --step flatfile    # Create final output
 ```
 
-## CLI Options
 
-```
-uv run python script.py --help
-
-Options:
-  --config PATH    Path to config.yaml (default: config.yaml)
-  --step STEP      Pipeline step: download, extract, split, flatfile, all
-  --force          Force re-run even if outputs exist
-  --list           List available downloads without downloading
-  --verbose, -v    Enable verbose/debug logging
-```
 
 ## Pipeline Stages
 
@@ -124,48 +113,4 @@ If you prefer to download manually:
 - Create a datapackage
 - Download the CSV files manually, or
 - [Set up](https://www.ordnancesurvey.co.uk/products/os-downloads-api) an [API key](https://docs.os.uk/os-apis/core-concepts/getting-started-with-an-api-project) and [download using a script](https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/getting-started/automating-os-premium-data-downloads)
-
-## Development
-
-```bash
-# Install dev dependencies
-uv sync --all-extras
-
-# Run tests
-uv run pytest
-
-# Run linter
-uv run ruff check .
-
-# Fix lint issues
-uv run ruff check --fix .
-```
-
-## Project Structure
-
-```
-abp-pipeline/
-├── script.py              # CLI entrypoint
-├── config.yaml            # Configuration
-├── pyproject.toml         # Dependencies
-├── .env.example           # Environment template
-├── src/abp_pipeline/
-│   ├── __init__.py
-│   ├── settings.py        # Config/env loading
-│   ├── os_downloads.py    # Download from OS Data Hub
-│   ├── extract.py         # Zip extraction
-│   ├── split_raw.py       # Split by record type
-│   ├── to_flatfile.py     # Final transformation
-│   ├── pipeline.py        # Orchestration
-│   └── schemas/
-│       └── abp_schema.yaml
-└── tests/
-    ├── test_smoke.py
-    └── data/
-        └── sample_abp_lines.csv
-```
-
-## License
-
-See LICENSE file
 
