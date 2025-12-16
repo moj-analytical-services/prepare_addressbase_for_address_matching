@@ -1,4 +1,72 @@
-"""Business (Organisation) name transformation stage."""
+"""Business (Organisation) name transformation stage.
+
+==============================================================================
+CONCEPTUAL OVERVIEW: The "Business Name" View ("Who is there?")
+==============================================================================
+
+This script creates address variants based on the commercial occupier of a
+property.
+
+To a non-expert, an address is usually "where" something is (10 High Street).
+However, people often search for "who" is there ("The Red Lion", "Tesco", or
+"Ministry of Justice"). If our database only knows "10 High Street", a search
+for "The Red Lion, High Street" will fail.
+
+This script solves that by sticking the business name onto the front of the
+address (LPI (Local Authority) address) to create a composite string.
+
+------------------------------------------------------------------------------
+Where does the data come from?
+------------------------------------------------------------------------------
+We use a specific table from AddressBase Premium, combined with our previous work:
+
+1.  **Organisation (Record Type 31):**
+    This table contains the names of non-domestic occupiers.
+    *   *Provenance:* Local Authority Custodians (often derived from Non-Domestic
+        Rates / Business Tax registers).
+    *   *Key Data:* It links to a UPRN and provides:
+        *   `Organisation Name`: The trading name (e.g., "Costa Coffee").
+        *   `Legal Name`: The registered company name (e.g., "Costa Ltd").
+
+2.  **LPI (Land and Property Identifier):**
+    We reuse the "Official" street addresses we calculated in the previous step
+    (`lpi.py`).
+
+------------------------------------------------------------------------------
+How is the address constructed?
+------------------------------------------------------------------------------
+We take the "Who" from the Organisation table and glue it to the "Where" from
+the LPI table.
+
+    [Organisation Name]  +  [Base Address]
+    "The Red Lion"       +  "10 High Street, London, SW1 1AA"
+          = "The Red Lion 10 High Street, London, SW1 1AA"
+
+------------------------------------------------------------------------------
+Why multiple variants?
+------------------------------------------------------------------------------
+A business might be known by several names, and it might have occupied the
+building when the building had a different address. We generate:
+
+1.  **BUSINESS_CURRENT:** The common trading name + the current address.
+    (e.g., "The Red Lion 10 High Street...")
+2.  **BUSINESS_CURRENT_LEGAL:** The official company name + the current address.
+    (e.g., "Red Lion Inns Ltd 10 High Street...")
+3.  **BUSINESS_HISTORICAL:**
+    If the business moved out years ago, or if the street was renamed while they
+    were there, we attempt to match the business record to the address record
+    that existed *at that specific time*.
+
+------------------------------------------------------------------------------
+Key Logic Explained
+------------------------------------------------------------------------------
+The script splits logic into `current_variants` (businesses still there) and
+`historical_variants` (businesses that have left).
+
+For historical records, it uses a "Lateral Join". This is a database technique
+that effectively asks: "For this old business record, find me the address
+version that was active during the dates the business was active."
+"""
 
 from __future__ import annotations
 

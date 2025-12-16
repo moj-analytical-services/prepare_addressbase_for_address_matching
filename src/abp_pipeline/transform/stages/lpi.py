@@ -1,4 +1,89 @@
-"""LPI (Land and Property Identifier) transformation stage."""
+"""LPI (Land and Property Identifier) transformation stage.
+
+==============================================================================
+CONCEPTUAL OVERVIEW: The "Official" Local Authority View of an Address
+==============================================================================
+
+This script constructs address strings based on data provided by Local
+Authorities (City & County Councils), rather than Royal Mail.
+
+To a non-expert, it might seem strange that "Official" addresses are separate
+from "Postal" addresses, but they serve different purposes. Local Authorities
+are legally responsible for naming streets and numbering buildings (for taxes,
+voting, emergency services, and planning). Royal Mail is responsible for
+delivering post. While usually the same, these two views often diverge
+(e.g., a "Granny Annexe" might be a separate property for Council Tax, but share
+a letterbox with the main house for Royal Mail).
+
+This script assembles the Local Authority view.
+
+------------------------------------------------------------------------------
+Where does the data come from?
+------------------------------------------------------------------------------
+We combine three specific tables from AddressBase Premium:
+
+1.  **LPI (Land and Property Identifier - Record Type 24):**
+    This is the core "linking" table. It doesn't contain the street name itself.
+    Instead, it links a physical object (UPRN) to a street (USRN) and adds the
+    specific house numbers or names.
+    *   *Provenance:* Local Authority Custodians.
+
+2.  **Street Descriptor (Record Type 15):**
+    This table holds the actual text names of streets (e.g., "High Street").
+    We join this to the LPI using the USRN (Unique Street Reference Number).
+    *   *Provenance:* Local Authority Custodians.
+
+3.  **BLPU (Basic Land and Property Unit - Record Type 21):**
+    This represents the physical existence of the property (the coordinate point).
+    Crucially, it usually holds the Postcode (supplied by Royal Mail but linked
+    to the council record).
+    *   *Provenance:* Local Authority (geometry) + Royal Mail (postcode link).
+
+------------------------------------------------------------------------------
+How is an address constructed? (The "Lego Brick" approach)
+------------------------------------------------------------------------------
+AddressBase is "normalized," meaning the address isn't stored as a full line
+of text. It is stored as components (SAO and PAO) that this script glues together.
+
+*   **SAO (Secondary Addressable Object):** The "inner" part of an address.
+    e.g., "Flat 3" or "First Floor".
+*   **PAO (Primary Addressable Object):** The "outer" part of an address.
+    e.g., "12" or "The Manor House".
+
+The logic in `build_base_address` combines these:
+    [SAO Start] [SAO Suffix] [SAO Text]  ->  "Flat 1"
+             +
+    [PAO Start] [PAO Suffix] [PAO Text]  ->  "12 Example House"
+             +
+    [Street Descriptor]                  ->  "Main Street"
+             +
+    [Town] + [Postcode]
+
+------------------------------------------------------------------------------
+Why does this script generate multiple rows per property?
+------------------------------------------------------------------------------
+A single property (UPRN) can have multiple LPI records. This is valuable for
+matching messy user input. We output variants based on **Logical Status**:
+
+1.  **Approved (1):** The current, legal address.
+2.  **Alternative (3):** A valid alias (e.g., a house has a number "4" but is
+    locally known as "Rose Cottage").
+3.  **Provisional (6):** The address assigned during planning/construction, which
+    might change before the house is built.
+4.  **Historic (8):** An old address. If "10 High St" is renumbered to "12 High St",
+    the old address is kept as Historic. This helps match old datasets.
+
+------------------------------------------------------------------------------
+Key Columns Explained
+------------------------------------------------------------------------------
+*   `uprn`: The "Golden Key". Use this to link this address to other data.
+*   `base_address`: The constructed full address string.
+*   `logical_status`: 1=Current, 6=Provisional, 8=Historic.
+*   `official_flag`: 'Y' indicates this is the "official" version, 'N' suggests
+    it might be an unofficial alias.
+*   `language`: 'ENG' (English) or 'CYM' (Welsh). Streets in Wales often have
+    two records, one in each language. We process both.
+"""
 
 from __future__ import annotations
 

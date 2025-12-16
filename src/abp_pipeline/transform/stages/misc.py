@@ -1,4 +1,62 @@
-"""Miscellaneous transformation stages (classification and custom levels)."""
+"""Miscellaneous transformation stages (classification and custom levels).
+
+==============================================================================
+CONCEPTUAL OVERVIEW: Classifications & "Floor Level" Variants
+==============================================================================
+
+This script handles two distinct but useful tasks:
+1.  Identifying **what** a property is (Classification).
+2.  Creating extra address variants based on which **floor** a property is on.
+
+------------------------------------------------------------------------------
+Part 1: Classification ("Is it a house or a shop?")
+------------------------------------------------------------------------------
+An address tells you *where* a building is. A classification tells you *what*
+it is.
+
+*   **Source:** Classification Table (Record Type 32).
+*   **Provenance:** Local Authorities and Ordnance Survey surveyors.
+*   **The Code:** `prepare_classification_best`
+*   **Concept:**
+    Every UPRN has a classification code (e.g., "RD" for Residential Dwelling,
+    "C" for Commercial). However, a single property might have multiple
+    classification records from different schemes (legacy vs. modern).
+    This function picks the "winner" for each UPRN, prioritizing the modern
+    "AddressBase Premium Classification Scheme". This allows downstream users to
+    easily filter for "just houses" or "just businesses".
+
+------------------------------------------------------------------------------
+Part 2: Custom Level Variants ("First Floor Flat")
+------------------------------------------------------------------------------
+To a non-expert, if you live on the first floor, you might write your address as
+"First Floor Flat, 10 High Street". However, the official Council address might
+simply be "Flat A, 10 High Street".
+
+If the official data tracks the vertical position of the property (the Level),
+we can generate a variant to match the human-written address.
+
+*   **Source:** LPI Table (Record Type 24) -> `level` column.
+*   **Provenance:** Local Authority Custodians.
+*   **The Code:** `render_custom_levels`
+*   **Concept:**
+    The LPI record often contains a numeric `level` (e.g., "1", "2", "0").
+    This script translates those numbers into words and sticks them onto the
+    front of the address.
+
+    *   **Mapping:**
+        *   -1 -> "BASEMENT"
+        *   0  -> "GROUND"
+        *   1  -> "FIRST"
+        *   (up to 6 -> "SIXTH")
+
+    *   **Example:**
+        *   Official Address: "Flat A, 10 High Street"
+        *   LPI Level Data: "1"
+        *   **Generated Variant:** "FIRST Flat A, 10 High Street"
+
+    This is purely a synthetic address variant designed to catch user input where
+    the floor level is written out explicitly.
+"""
 
 from __future__ import annotations
 
