@@ -14,9 +14,12 @@ AddressBase Premium data is available to many government users under the [PSGA](
 
 ### 1. Prerequisites
 
+- Create a datapackage on the OS Data Hub containing the AddressBase data you need - either full supply or the subset of the country you're interested in
 - Python 3.12+
 - [uv](https://github.com/astral-sh/uv) package manager
-- OS Data Hub API key (get one at https://osdatahub.os.uk/)
+- OS Data Hub API key (get one at https://osdatahub.os.uk/) — only required for the download step
+
+
 
 ### 2. Setup
 
@@ -111,6 +114,23 @@ Each file contains:
 If you prefer to download manually:
 - Log into https://osdatahub.os.uk/
 - Create a datapackage
-- Download the CSV files manually, or
+- Download the CSV zip file (e.g., AB76GB_CSV.zip)
+
+To run the pipeline from a manual download:
+
+1) Place the zip in the downloads directory configured in [config.yaml](config.yaml).
+  - By default this is data/downloads/
+  - The extract step looks for *.zip files in this folder
+
+2) Run the pipeline starting from extract:
+  - In [script.py](script.py) set STEP = ["extract", "split", "flatfile"]
+  - Then run: uv run python script.py
+
+Notes:
+- Extraction will create a subfolder under data/extracted/ named after the zip stem
+  (e.g., data/extracted/AB76GB_CSV/) and the split step will read **/*.csv from there.
+
+If you prefer to use the OS Downloads API instead:
 - [Set up](https://www.ordnancesurvey.co.uk/products/os-downloads-api) an [API key](https://docs.os.uk/os-apis/core-concepts/getting-started-with-an-api-project) and [download using a script](https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/getting-started/automating-os-premium-data-downloads)
+
 
