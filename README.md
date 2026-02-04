@@ -134,3 +134,8 @@ If you prefer to use the OS Downloads API instead:
 - [Set up](https://www.ordnancesurvey.co.uk/products/os-downloads-api) an [API key](https://docs.os.uk/os-apis/core-concepts/getting-started-with-an-api-project) and [download using a script](https://docs.os.uk/os-apis/accessing-os-apis/os-downloads-api/getting-started/automating-os-premium-data-downloads)
 
 
+## Time taken to run:
+
+Excluding the time to download the full 9.6GB zip file, on an M4 Macbook Pro it takes about:
+- 1 minute to extract the zip file
+- 7 minutes to run the remainder of the build script
