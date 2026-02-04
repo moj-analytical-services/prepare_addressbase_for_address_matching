@@ -3,7 +3,6 @@
 Downloads, processes and transforms AddressBase Premium data
 for UK address matching.
 
-This script is designed to be run in Jupyter notebooks or similar environments.
 Modify the settings below to configure the pipeline.
 """
 
@@ -28,7 +27,7 @@ CONFIG_PATH = Path("config.yaml")
 # Pipeline step(s) to run. Can be:
 # - A single step: "download", "extract", "split", "flatfile", or "all"
 # - A list of steps to run in sequence: ["split", "flatfile"]
-STEP: str | list[str] = ["extract", "split", "flatfile"]
+STEP: str | list[str] = ["download", "extract", "split", "flatfile"]
 
 # Force re-run even if outputs exist
 FORCE = True
