@@ -90,7 +90,7 @@ def _create_macros(con: duckdb.DuckDBPyConnection) -> None:
         CREATE OR REPLACE MACRO build_base_address(
             sao_text, sao_start_number, sao_start_suffix, sao_end_number, sao_end_suffix,
             pao_text, pao_start_number, pao_start_suffix, pao_end_number, pao_end_suffix,
-            street_description, locality_name, town_name, postcode
+            street_description, locality_name, town_name
         ) AS
         TRIM(concat_ws(' ',
             NULLIF(TRIM(concat_ws(' ',
@@ -99,8 +99,7 @@ def _create_macros(con: duckdb.DuckDBPyConnection) -> None:
             )), ''),
             NULLIF(street_description, ''),
             NULLIF(locality_name, ''),
-            NULLIF(town_name, ''),
-            NULLIF(postcode, '')
+            NULLIF(town_name, '')
         ))
     """)
 
@@ -174,8 +173,7 @@ def _prepare_lpi_base(con: duckdb.DuckDBPyConnection) -> None:
                 l.pao_text, l.pao_start_number, l.pao_start_suffix, l.pao_end_number, l.pao_end_suffix,
                 COALESCE(sd_lang.street_description, sd_any.street_description),
                 COALESCE(sd_lang.locality, sd_any.locality),
-                COALESCE(sd_lang.town_name, sd_any.town_name),
-                b.postcode_locator
+                COALESCE(sd_lang.town_name, sd_any.town_name)
             ) AS base_address,
             CASE l.logical_status
                 WHEN 1 THEN 0
@@ -417,8 +415,7 @@ def _render_delivery_point_variants(con: duckdb.DuckDBPyConnection) -> None:
                     NULLIF(d.thoroughfare, ''),
                     NULLIF(d.double_dependent_locality, ''),
                     NULLIF(d.dependent_locality, ''),
-                    NULLIF(d.post_town, ''),
-                    NULLIF(d.postcode, '')
+                    NULLIF(d.post_town, '')
                 )) AS raw_address
             FROM delivery_point d
             WHERE d.postcode IS NOT NULL

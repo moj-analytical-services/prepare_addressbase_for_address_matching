@@ -10,6 +10,12 @@ This package downloads, extracts, and transforms [AddressBase Premium](https://w
 
 AddressBase Premium data is available to many government users under the [PSGA](https://www.ordnancesurvey.co.uk/customers/public-sector/public-sector-geospatial-agreement).
 
+The whole pipline is automated:
+- Set up your datapackage in the OS Data Hub, and update [the config](config.yaml) with the `package_id` and `version_id`
+- Provide your OS API key in the `.env` file (from https://osdatahub.os.uk/data/apis/projects -> your project)
+- Run [script.py](script.py)
+- The resultant parquet file(s) (default path `.data/output`) are now in the format required by `uk_address_matcher`.
+
 ## Quick Start
 
 ### 1. Prerequisites
@@ -60,15 +66,18 @@ processing:
 
 ### 4. Run
 
-```bash
-# Run the full pipeline
-uv run python script.py --step all
+The pipeline is run via [script.py](script.py), which is configured by editing the variables at the top of the file:
 
-# Or run individual steps
-uv run python script.py --step download    # Download ABP data
-uv run python script.py --step extract     # Extract zip files
-uv run python script.py --step split       # Split by record type
-uv run python script.py --step flatfile    # Create final output
+```python
+# In script.py, set:
+STEP = ["download", "extract", "split", "flatfile"]  # Or "all" for all steps
+FORCE = True  # Re-run even if outputs exist
+```
+
+Then run:
+
+```bash
+uv run python script.py
 ```
 
 
@@ -97,7 +106,7 @@ Each file contains:
 |--------|-------------|
 | `uprn` | Unique Property Reference Number |
 | `postcode` | Postal code |
-| `address_concat` | Concatenated address string |
+| `address_concat` | Concatenated address string (without postcode) |
 | `classification_code` | Property classification |
 | `logical_status` | Address status (1=Approved, 3=Alternative, etc.) |
 | `blpu_state` | Building state |

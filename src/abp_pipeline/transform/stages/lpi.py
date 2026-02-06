@@ -177,8 +177,7 @@ def prepare_lpi_base(con: duckdb.DuckDBPyConnection) -> None:
                 l.pao_text, l.pao_start_number, l.pao_start_suffix, l.pao_end_number, l.pao_end_suffix,
                 COALESCE(sd_lang.street_description, sd_any.street_description),
                 COALESCE(sd_lang.locality, sd_any.locality),
-                COALESCE(sd_lang.town_name, sd_any.town_name),
-                b.postcode_locator
+                COALESCE(sd_lang.town_name, sd_any.town_name)
             ) AS base_address,
             CASE l.logical_status
                 WHEN 1 THEN 0

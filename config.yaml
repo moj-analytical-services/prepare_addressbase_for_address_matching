@@ -18,18 +18,20 @@ paths:
   output_dir: ./data/output
 
 # OS Data Hub download settings
-os_downloads:
-  # Data package ID from OS Data Hub
-  package_id: "0040204651"
-  # Version ID (update this when new data is released)
-  version_id: "6758807"
 
-# Small subset for testing
+# Full supply
 # os_downloads:
 #   # Data package ID from OS Data Hub
-#   package_id: "0040206240"
+#   package_id: "0040204651"
 #   # Version ID (update this when new data is released)
-#   version_id: "6777574"
+#   version_id: "6758807"
+
+# Small subset for testing
+os_downloads:
+  # Data package ID from OS Data Hub
+  package_id: "0040206240"
+  # Version ID (update this when new data is released)
+  version_id: "6777574"
 
 # Processing options
 processing:

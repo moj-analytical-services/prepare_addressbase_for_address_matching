@@ -138,7 +138,10 @@ def get_random_uprn(con: duckdb.DuckDBPyConnection, settings: Settings) -> duckd
 
 
 def get_random_large_uprn(
-    con: duckdb.DuckDBPyConnection, settings: Settings, top_n: int = 100
+    con: duckdb.DuckDBPyConnection,
+    settings: Settings,
+    top_n: int = 100,
+    filter_clause: str | None = None,
 ) -> duckdb.DuckDBPyRelation:
     """Show variants for a randomly selected UPRN from the top N largest.
 
@@ -149,6 +152,7 @@ def get_random_large_uprn(
         con: DuckDB connection.
         settings: Application settings.
         top_n: Number of largest UPRNs to consider (default 100).
+        filter_clause: Optional SQL WHERE condition to filter variants (e.g., "variant_label != 'HISTORICAL'").
 
     Returns:
         DuckDB relation containing the variants for the selected UPRN.
@@ -156,11 +160,16 @@ def get_random_large_uprn(
     _assert_flatfile_exists(settings)
     flatfile_pattern = _get_flatfile_glob_pattern(settings)
 
+    # Build WHERE clause for filtering
+    where_filter = f"WHERE {filter_clause}" if filter_clause else ""
+    and_filter = f"AND {filter_clause}" if filter_clause else ""
+
     # Get a random UPRN from the top N largest
     selected = con.sql(f"""
         WITH variant_counts AS (
             SELECT uprn, COUNT(*) AS variant_count
             FROM read_parquet('{flatfile_pattern}')
+            {where_filter}
             GROUP BY uprn
             ORDER BY variant_count DESC
             LIMIT {top_n}
@@ -191,6 +200,7 @@ def get_random_large_uprn(
             udprn
         FROM read_parquet('{flatfile_pattern}')
         WHERE uprn = {random_uprn}
+        {and_filter}
         ORDER BY is_primary DESC, source, variant_label
     """)
 

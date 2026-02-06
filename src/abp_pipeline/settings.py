@@ -35,7 +35,7 @@ class OSDownloadSettings:
 
     package_id: str
     version_id: str
-    api_key: str
+    api_key: str | None
     api_secret: str | None = None
 
 
@@ -91,17 +91,10 @@ def _load_yaml(config_path: Path) -> dict[str, Any]:
     return config
 
 
-def _validate_env_vars() -> tuple[str, str | None]:
-    """Validate required environment variables exist."""
+def _get_env_vars() -> tuple[str | None, str | None]:
+    """Get OS Data Hub environment variables (may be unset)."""
     api_key = os.environ.get("OS_PROJECT_API_KEY")
     api_secret = os.environ.get("OS_PROJECT_API_SECRET")
-
-    if not api_key:
-        raise SettingsError(
-            "OS_PROJECT_API_KEY not found in environment. "
-            "Create a .env file with OS_PROJECT_API_KEY=<your-key>"
-        )
-
     return api_key, api_secret
 
 
@@ -116,8 +109,7 @@ def load_settings(config_path: str | Path, load_env: bool = True) -> Settings:
         Complete Settings object with resolved paths.
 
     Raises:
-        SettingsError: If config file is missing or invalid,
-                       or if required environment variables are not set.
+        SettingsError: If config file is missing or invalid.
     """
     config_path = Path(config_path).resolve()
     base_dir = config_path.parent
@@ -132,8 +124,8 @@ def load_settings(config_path: str | Path, load_env: bool = True) -> Settings:
     # Load YAML config
     config = _load_yaml(config_path)
 
-    # Validate environment variables
-    api_key, api_secret = _validate_env_vars()
+    # Read environment variables (download step will validate if required)
+    api_key, api_secret = _get_env_vars()
 
     # Build path settings
     paths_config = config.get("paths", {})
