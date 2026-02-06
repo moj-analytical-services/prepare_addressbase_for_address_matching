@@ -13,7 +13,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 
-from abp_pipeline.settings import Settings
+from abp_pipeline.settings import Settings, SettingsError
 
 logger = logging.getLogger(__name__)
 
@@ -278,6 +278,12 @@ def run_download_step(settings: Settings, force: bool = False, list_only: bool =
         force: Force re-download even if files exist.
         list_only: Only list available downloads, don't download.
     """
+    if not settings.os_downloads.api_key:
+        raise SettingsError(
+            "OS_PROJECT_API_KEY not found in environment. "
+            "Create a .env file with OS_PROJECT_API_KEY=<your-key> to use the download step."
+        )
+
     logger.info("Fetching package metadata from OS Data Hub...")
     metadata = get_package_version(settings)
     items = list_downloads(metadata)

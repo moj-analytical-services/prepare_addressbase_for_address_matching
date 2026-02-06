@@ -101,7 +101,7 @@ def create_macros(con: duckdb.DuckDBPyConnection) -> None:
         CREATE OR REPLACE MACRO build_base_address(
             sao_text, sao_start_number, sao_start_suffix, sao_end_number, sao_end_suffix,
             pao_text, pao_start_number, pao_start_suffix, pao_end_number, pao_end_suffix,
-            street_description, locality_name, town_name, postcode
+            street_description, locality_name, town_name
         ) AS
         TRIM(concat_ws(' ',
             NULLIF(TRIM(concat_ws(' ',
@@ -110,7 +110,6 @@ def create_macros(con: duckdb.DuckDBPyConnection) -> None:
             )), ''),
             NULLIF(street_description, ''),
             NULLIF(locality_name, ''),
-            NULLIF(town_name, ''),
-            NULLIF(postcode, '')
+            NULLIF(town_name, '')
         ))
     """)

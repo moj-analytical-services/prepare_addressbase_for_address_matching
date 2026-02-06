@@ -106,8 +106,7 @@ def render_variants(con: duckdb.DuckDBPyConnection) -> None:
                     NULLIF(d.thoroughfare, ''),
                     NULLIF(d.double_dependent_locality, ''),
                     NULLIF(d.dependent_locality, ''),
-                    NULLIF(d.post_town, ''),
-                    NULLIF(d.postcode, '')
+                    NULLIF(d.post_town, '')
                 )) AS raw_address
             FROM delivery_point d
             WHERE d.postcode IS NOT NULL
